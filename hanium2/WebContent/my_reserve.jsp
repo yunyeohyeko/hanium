@@ -28,6 +28,12 @@
 
  String DB_USER = "root"; //  데이터베이스에 접근하는 아이디
  String DB_PASSWORD= "c4iuser1!"; // password
+ int wait_people = 0;
+ String wait_person = null;
+ String cnt = null;
+
+java.text.SimpleDateFormat formatter = new java.text.SimpleDateFormat("yyyy년 MM월 dd일");
+String today = formatter.format(new java.util.Date());
 
 
  try {     
@@ -35,29 +41,61 @@
 	 Statement stmt = conn.createStatement(); // 상태 확인
      String query = "SELECT b_number, c_name, w_number FROM reservation WHERE u_phonenumber = " + phonenumber; 
      ResultSet rs = stmt.executeQuery(query); // 쿼리문 실행!
+     
+     
+     Statement stmt3 = conn.createStatement(); // 상태 확인
+     String query3 = "SELECT count(b_number) cnt FROM reservation WHERE u_phonenumber = " + phonenumber; 
+     ResultSet rs3 = stmt3.executeQuery(query3); // 쿼리문 실행!
+     
+     while(rs3.next()){        
+    	 cnt = rs3.getString("cnt");
+     }
+     
+%>       
+  
+  
+	<div data-role="content">
+		<ul data-role="listview" id="my_reserve_list" >
+		<li data-role='list-divider' id='listitle'>부스 예약 수 : <%=cnt%>개
+				<p class="ui-li-aside"><%=today%></p>
+		</li>
 
-
+		
+<%     
      while(rs.next()){                                                        // 결과를 한 행씩 돌아가면서 가져온다.
 
     	 String booth_num = rs.getString("b_number");
     	 String booth_name = rs.getString("c_name");
     	 String booth_wait_num = rs.getString("w_number");
-     
- 
+    	 
+    	 
+    	 Statement stmt2 = conn.createStatement(); // 상태 확인
+         String query2 = "SELECT min(w_number) as min FROM reservation WHERE b_number = '" + booth_num + "'"; 
+         ResultSet rs2 = stmt2.executeQuery(query2); // 쿼리문 실행!
+         
+         while(rs2.next()){  
+        	 String booth_wait_number_min = rs2.getString("min");
+        	 wait_people = Integer.parseInt(booth_wait_num) - Integer.parseInt(booth_wait_number_min);  
+        	 
+			if(wait_people == 0){
+				wait_person = "대기자수 : " + wait_people + "명<br>부스에 입장하세요.";
+			}
+			else{
+				wait_person = "대기자수 : " + wait_people + "명";
+			}
+         }
+
+    	 	 
  %>
 
-	<div data-role="content">
-		<ul data-role="listview" id="my_reserve_list" >
+
 			<li><a href="booth_cancel.jsp?booth_name=<%=booth_name%>&phonenumber=<%=phonenumber%>">
-					<h4>[<%=booth_num%>]부스 <%=booth_name%>예약</h4>
+					<h4>[<%=booth_num%>부스] &nbsp<%=booth_name%> 예약 중</h4>
 					<p>대기순서 <%=booth_wait_num%>번</p>
-					<span class="ui-li-count">대기자수: 0명</span>
+					<span class="ui-li-count"><%=wait_person%></span>
 			</a></li>
 
-	</div>
-	
 
- 
  
 <% 
      }
@@ -67,7 +105,7 @@
  }
 
 %>
-
+</div>
 
 	
 </body>
